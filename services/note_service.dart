@@ -2,19 +2,26 @@ import 'package:flutter/foundation.dart';
 import '../models/note.dart';
 import '../supabase/supabase_config.dart';
 
-
 class NoteService {
   static const String _homeTable = 'data_home';
   static const String _archiveTable = 'data_archive';
 
+  /// Bộ nhớ tạm ngầm cho màn hình Home và Archive
+  static List<Note> cachedHomeNotes = [];
+  static List<Note> cachedArchiveNotes = [];
+
   /// Lấy data_home
   static Future<List<Note>> getHomeNotes() async {
-    return _fetchNotesFromTable(_homeTable);
+    final list = await _fetchNotesFromTable(_homeTable);
+    cachedHomeNotes = list;
+    return list;
   }
 
   /// Lấy data_archive
   static Future<List<Note>> getArchiveNotes() async {
-    return _fetchNotesFromTable(_archiveTable);
+    final list = await _fetchNotesFromTable(_archiveTable);
+    cachedArchiveNotes = list;
+    return list;
   }
 
   /// Lưu ghi chú
@@ -23,6 +30,7 @@ class NoteService {
     required String title,
     required String content,
     required bool pin,
+    String color = 'default',
     bool isArchive = false,
   }) async {
     final trimmedTitle = title.trim();
@@ -37,7 +45,8 @@ class NoteService {
     if (existingNote != null &&
         existingNote.title.trim() == trimmedTitle &&
         existingNote.content.trim() == trimmedContent &&
-        existingNote.pin == pin) {
+        existingNote.pin == pin &&
+        existingNote.color == color) {
       return;
     }
 
@@ -51,7 +60,7 @@ class NoteService {
           'title': trimmedTitle,
           'content': trimmedContent,
           'pin': pin,
-          // 'created_at': ,
+          'color': color,
           'edited_at': nowUtc,
         };
 
@@ -74,7 +83,7 @@ class NoteService {
           'title': trimmedTitle,
           'content': trimmedContent,
           'pin': pin,
-          // 'created_at': nowUtc,
+          'color': color,
           'edited_at': nowUtc,
         });
       }
@@ -90,6 +99,7 @@ class NoteService {
     required String title,
     required String content,
     required bool pin,
+    String color = 'default',
   }) async {
     final trimmedTitle = title.trim();
     final trimmedContent = content.trim();
@@ -106,7 +116,7 @@ class NoteService {
         'title': trimmedTitle,
         'content': trimmedContent,
         'pin': pin,
-        // 'created_at': nowUtc,
+        'color': color,
         'edited_at': nowUtc,
       });
 
@@ -126,6 +136,7 @@ class NoteService {
     required String title,
     required String content,
     required bool pin,
+    String color = 'default',
   }) async {
     final trimmedTitle = title.trim();
     final trimmedContent = content.trim();
@@ -142,7 +153,7 @@ class NoteService {
         'title': trimmedTitle,
         'content': trimmedContent,
         'pin': pin,
-        // 'created_at': nowUtc,
+        'color': color,
         'edited_at': nowUtc,
       });
 
