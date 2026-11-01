@@ -3,6 +3,7 @@ class Note {
   final String title;
   final String content;
   final bool pin;
+  final String color;
   final DateTime? createdAt;
   final DateTime? editedAt;
 
@@ -12,6 +13,7 @@ class Note {
     this.title = '',
     this.content = '',
     this.pin = false,
+    this.color = 'default',
     this.createdAt,
     this.editedAt,
   });
@@ -25,6 +27,7 @@ class Note {
       title: map['title']?.toString() ?? '',
       content: map['content']?.toString() ?? '',
       pin: map['pin'] == true,
+      color: map['color']?.toString() ?? 'default',
       createdAt: map['created_at'] != null
           ? DateTime.tryParse(map['created_at'].toString())
           : null,
@@ -37,10 +40,11 @@ class Note {
   // Chuyển 1 note object thành 1 map
   Map<String, dynamic> toMap() {
     return {
-      if (id!=null) 'id': id,
+      if (id != null) 'id': id,
       'title': title,
       'content': content,
       'pin': pin,
+      'color': color,
       'created_at': createdAt,
       'edited_at': (editedAt ?? DateTime.now().toUtc()).toIso8601String(),
     };
@@ -52,6 +56,7 @@ class Note {
     String? title,
     String? content,
     bool? pin,
+    String? color,
     DateTime? createdAt,
     DateTime? editedAt,
   }) {
@@ -60,8 +65,9 @@ class Note {
       title: title ?? this.title,
       content: content ?? this.content,
       pin: pin ?? this.pin,
+      color: color ?? this.color,
       createdAt: createdAt ?? this.createdAt,
-      editedAt: editedAt?? this.editedAt,
+      editedAt: editedAt ?? this.editedAt,
     );
   }
 }
