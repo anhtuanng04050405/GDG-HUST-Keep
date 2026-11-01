@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/note.dart';
 import '../services/note_service.dart';
+import '../utils/note_color.dart';
 
 class NoteEditorScreen extends StatefulWidget {
   final Note? note;
@@ -20,6 +21,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   late final TextEditingController _titleController;
   late final TextEditingController _contentController;
   late bool _isPinned;
+  late String _selectedColor;
   bool _isSaving = false;
   bool _isActionHandled = false;
 
@@ -30,6 +32,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     _contentController =
         TextEditingController(text: widget.note?.content ?? '');
     _isPinned = widget.note?.pin ?? false;
+    _selectedColor = widget.note?.color ?? 'default';
   }
 
   Future<void> _saveNote() async {
@@ -42,6 +45,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         title: _titleController.text,
         content: _contentController.text,
         pin: _isPinned,
+        color: _selectedColor,
         isArchive: widget.isArchive,
       );
     } catch (e) {
@@ -58,6 +62,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         title: _titleController.text,
         content: _contentController.text,
         pin: _isPinned,
+        color: _selectedColor,
       );
 
       if (mounted) {
@@ -84,6 +89,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         title: _titleController.text,
         content: _contentController.text,
         pin: _isPinned,
+        color: _selectedColor,
       );
 
       if (mounted) {
@@ -154,6 +160,65 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     }
   }
 
+  Widget _buildColorMenu(ColorScheme colorScheme) {
+    return PopupMenuButton<String>(
+      tooltip: 'Chọn màu ghi chú',
+      icon: Icon(
+        Icons.palette_outlined,
+        color: colorScheme.onSurface,
+      ),
+      constraints: const BoxConstraints(
+        minWidth: 44,
+        maxWidth: 48,
+      ),
+      padding: EdgeInsets.zero,
+      menuPadding: const EdgeInsets.symmetric(vertical: 4),
+      onSelected: (String colorKey) {
+        setState(() {
+          _selectedColor = colorKey;
+        });
+      },
+      itemBuilder: (BuildContext context) {
+        return NoteColorHelper.availableColors.map((colorItem) {
+          final key = colorItem['key']!;
+          final isSelected = _selectedColor == key;
+          final previewColor = NoteColorHelper.getPreviewColor(key, context);
+
+          return PopupMenuItem<String>(
+            value: key,
+            height: 36,
+            padding: EdgeInsets.zero,
+            child: Center(
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: previewColor,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isSelected
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.grey.withValues(alpha: 0.5),
+                    width: isSelected ? 2 : 1,
+                  ),
+                ),
+                child: isSelected
+                    ? Icon(
+                        Icons.check,
+                        size: 14,
+                        color: key == 'default'
+                            ? Theme.of(context).colorScheme.onSurface
+                            : Colors.white,
+                      )
+                    : null,
+              ),
+            ),
+          );
+        }).toList();
+      },
+    );
+  }
+
   Future<void> _handleBack() async {
     if (!_isActionHandled) {
       await _saveNote();
@@ -167,6 +232,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final backgroundColor = _selectedColor == 'default'
+        ? theme.scaffoldBackgroundColor
+        : NoteColorHelper.getCardBackgroundColor(_selectedColor, context);
 
     return PopScope(
       canPop: false,
@@ -180,9 +248,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
+        backgroundColor: backgroundColor,
         appBar: AppBar(
-          backgroundColor: theme.scaffoldBackgroundColor,
+          backgroundColor: backgroundColor,
           elevation: 0,
           scrolledUnderElevation: 0,
           leading: IconButton(
@@ -192,6 +260,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           actions: [
             // Ghim
             IconButton(
+              tooltip: _isPinned ? 'Bỏ ghim' : 'Ghim',
               icon: Icon(
                 _isPinned ? Icons.push_pin : Icons.push_pin_outlined,
                 color: colorScheme.onSurface,
@@ -202,6 +271,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                 });
               },
             ),
+
+            // Dropdown chọn màu ghi chú theo chiều dọc
+            _buildColorMenu(colorScheme),
 
             // Lưu trữ (khi ở màn hình chính)
             if (!widget.isArchive)
