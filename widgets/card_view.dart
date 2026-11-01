@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/note.dart';
+import '../utils/note_color.dart';
 
 class CardView extends StatelessWidget {
   final Note note;
@@ -25,8 +26,9 @@ class CardView extends StatelessWidget {
     );
   }
 
-  String parseTime(String time){
-    return time.substring(8, 10)+'-'+time.substring(5, 7)+'-'+time.substring(0, 4);
+  String parseTime(String time) {
+    if (time.length < 10) return time;
+    return '${time.substring(8, 10)}-${time.substring(5, 7)}-${time.substring(0, 4)}';
   }
 
   @override
@@ -42,10 +44,12 @@ class CardView extends StatelessWidget {
     final hasTitle = title.trim().isNotEmpty;
     final hasContent = content.trim().isNotEmpty;
 
+    final cardBgColor = NoteColorHelper.getCardBackgroundColor(note.color, context);
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        color: cardBgColor,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: colorScheme.outlineVariant.withValues(alpha: 0.5),
@@ -100,17 +104,17 @@ class CardView extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                        'Ngày tạo: '+parseTime(createdAt.toString()),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
-                    ),
-                    Text(
-                      'Ngày chỉnh sửa: '+parseTime(editedAt.toString()),
+                      'Ngày tạo: ${parseTime(createdAt.toString())}',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey,
+                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                      ),
+                    ),
+                    Text(
+                      'Ngày chỉnh sửa: ${parseTime(editedAt.toString())}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
