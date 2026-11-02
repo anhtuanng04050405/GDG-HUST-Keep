@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
+import 'screens/welcome_screen.dart';
 import 'supabase/supabase_config.dart';
 
 void main() async {
@@ -62,7 +62,7 @@ class _MyAppState extends State<MyApp> {
     final colorScheme = _getColorScheme();
 
     return MaterialApp(
-      title: 'Ghi chú',
+      title: '<GDG-HUST> Keep',
       debugShowCheckedModeBanner: false,
       themeMode: _currentTheme == 'dark'
           ? ThemeMode.dark
@@ -79,7 +79,7 @@ class _MyAppState extends State<MyApp> {
         colorScheme: colorScheme,
         scaffoldBackgroundColor: colorScheme.surface,
       ),
-      home: HomeScreen(
+      home: WelcomeScreen(
         currentTheme: _currentTheme,
         currentColor: _currentColor,
         onThemeChanged: _updateTheme,
