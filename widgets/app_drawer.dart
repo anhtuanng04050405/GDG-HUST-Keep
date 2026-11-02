@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../screens/home_screen.dart';
 import '../screens/archive_screen.dart';
 import '../screens/settings_screen.dart';
+import '../screens/login_screen.dart';
 
 class KeepDrawer extends StatelessWidget {
   final int selectedIndex;
@@ -109,6 +110,27 @@ class KeepDrawer extends StatelessWidget {
                       onThemeChanged: onThemeChanged,
                     ),
                   ),
+                );
+              },
+            ),
+
+            // Đăng xuất
+            _DrawerItem(
+              icon: Icons.logout,
+              label: 'Đăng xuất',
+              isSelected: false,
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => LoginScreen(
+                      currentTheme: currentTheme,
+                      currentColor: currentColor,
+                      onThemeChanged: onThemeChanged,
+                    ),
+                  ),
+                  (route) => false,
                 );
               },
             ),

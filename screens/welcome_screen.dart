@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:keep/screens/settings_screen.dart';
-import 'home_screen.dart';
+import 'login_screen.dart';
+import 'settings_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
   final String currentTheme;
@@ -27,7 +27,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => HomeScreen(
+          builder: (context) => LoginScreen(
             currentTheme: widget.currentTheme,
             currentColor: widget.currentColor,
             onThemeChanged: widget.onThemeChanged,

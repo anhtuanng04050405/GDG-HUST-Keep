@@ -1,33 +1,56 @@
 import 'package:flutter/material.dart';
 import 'screens/welcome_screen.dart';
+import 'services/settings_service.dart';
 import 'supabase/supabase_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await SupabaseConfig.initialize();
+  } catch (e) {
   }
-  catch (e) {
-  }
-  runApp(const MyApp());
+
+  final initialTheme = await SettingsService.getTheme();
+  final initialColor = await SettingsService.getColor();
+
+  runApp(MyApp(
+    initialTheme: initialTheme,
+    initialColor: initialColor,
+  ));
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+  final String initialTheme;
+  final String initialColor;
+
+  const MyApp({
+    super.key,
+    this.initialTheme = 'light',
+    this.initialColor = 'yellow',
+  });
 
   @override
   State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  String _currentTheme = 'light'; // 'light', 'dark', 'system'
-  String _currentColor = 'yellow'; // Mặc định là 'yellow'
+  late String _currentTheme;
+  late String _currentColor;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentTheme = widget.initialTheme;
+    _currentColor = widget.initialColor;
+  }
 
   void _updateTheme(String theme, String color) {
     setState(() {
       _currentTheme = theme;
       _currentColor = color;
     });
+    SettingsService.saveTheme(theme);
+    SettingsService.saveColor(color);
   }
 
   ColorScheme _getColorScheme() {

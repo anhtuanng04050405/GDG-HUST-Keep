@@ -5,6 +5,7 @@ class KeepSearchBar extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final TextEditingController? controller;
   final VoidCallback? onClear;
+  final Widget? trailing;
 
   const KeepSearchBar({
     super.key,
@@ -12,6 +13,7 @@ class KeepSearchBar extends StatelessWidget {
     this.onChanged,
     this.controller,
     this.onClear,
+    this.trailing,
   });
 
   @override
@@ -70,6 +72,7 @@ class KeepSearchBar extends StatelessWidget {
                 }
               },
             ),
+          if (trailing != null) trailing!,
         ],
       ),
     );
