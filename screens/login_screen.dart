@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+
 import 'home_screen.dart';
 import 'settings_screen.dart';
+import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final String currentTheme;
@@ -50,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = true;
     });
 
-    // Giả lập xử lý đăng nhập ngắn tạo cảm giác mượt mà
+    // Đăng nhập demo của Tuấn, chưa kết nối Supabase Auth.
     Future.delayed(const Duration(milliseconds: 300), () {
       if (!mounted) return;
 
@@ -78,14 +80,37 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
+  // Mở màn hình đăng ký và nhận kết quả khi quay lại.
+  Future<void> _openSignUp() async {
+    final result = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (_) => const SignUpScreen()),
+    );
+
+    if (!mounted || result == null) return;
+
+    // Supabase có thể yêu cầu xác nhận email trước khi đăng nhập.
+    final message = result == 'verify'
+        ? 'Đã gửi yêu cầu đăng ký. Hãy kiểm tra email để xác nhận tài khoản.'
+        : 'Tạo tài khoản thành công!';
+
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    final footerTitleColor = isDark ? const Color(0xFF90CAF9) : const Color(0xFF243757);
-    final footerSubtitleColor = isDark ? const Color(0xFFB0BEC5) : const Color(0xFF5E6C84);
+    final footerTitleColor = isDark
+        ? const Color(0xFF90CAF9)
+        : const Color(0xFF243757);
+
+    final footerSubtitleColor = isDark
+        ? const Color(0xFFB0BEC5)
+        : const Color(0xFF5E6C84);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -95,13 +120,11 @@ class _LoginScreenState extends State<LoginScreen> {
             return SingleChildScrollView(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight,
-                ),
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: IntrinsicHeight(
                   child: Column(
                     children: [
-                      // Header image
+                      // Header image.
                       Padding(
                         padding: const EdgeInsets.fromLTRB(35, 16, 35, 12),
                         child: ClipRRect(
@@ -134,7 +157,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 12),
 
-                      // Tiêu đề Đăng nhập
+                      // Tiêu đề đăng nhập.
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 24),
                         child: Column(
@@ -162,7 +185,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 24),
 
-                      // Form đăng nhập
+                      // Form đăng nhập.
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 24),
                         child: Form(
@@ -170,7 +193,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              // Username field
+                              // Username field.
                               TextFormField(
                                 controller: _usernameController,
                                 textInputAction: TextInputAction.next,
@@ -184,7 +207,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(14),
                                     borderSide: BorderSide(
-                                      color: colorScheme.outline.withValues(alpha: 0.5),
+                                      color: colorScheme.outline.withValues(
+                                        alpha: 0.5,
+                                      ),
                                     ),
                                   ),
                                   focusedBorder: OutlineInputBorder(
@@ -195,7 +220,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                                   filled: true,
-                                  fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                                  fillColor: colorScheme.surfaceContainerHighest
+                                      .withValues(alpha: 0.3),
                                 ),
                                 validator: (value) {
                                   if (value == null || value.trim().isEmpty) {
@@ -207,12 +233,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
                               const SizedBox(height: 16),
 
-                              // Password field
+                              // Password field.
                               TextFormField(
                                 controller: _passwordController,
                                 obscureText: _obscurePassword,
                                 textInputAction: TextInputAction.done,
-                                onFieldSubmitted: (_) => _handleLogin(),
+                                onFieldSubmitted: (_) {
+                                  if (!_isLoading) _handleLogin();
+                                },
                                 decoration: InputDecoration(
                                   labelText: 'Mật khẩu',
                                   hintText: 'Nhập mật khẩu',
@@ -235,7 +263,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(14),
                                     borderSide: BorderSide(
-                                      color: colorScheme.outline.withValues(alpha: 0.5),
+                                      color: colorScheme.outline.withValues(
+                                        alpha: 0.5,
+                                      ),
                                     ),
                                   ),
                                   focusedBorder: OutlineInputBorder(
@@ -246,7 +276,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                                   filled: true,
-                                  fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                                  fillColor: colorScheme.surfaceContainerHighest
+                                      .withValues(alpha: 0.3),
                                 ),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
@@ -256,13 +287,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                 },
                               ),
 
-                              // Error Message
+                              // Error Message.
                               if (_errorMessage != null) ...[
                                 const SizedBox(height: 12),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 10,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: colorScheme.errorContainer.withValues(alpha: 0.7),
+                                    color: colorScheme.errorContainer
+                                        .withValues(alpha: 0.7),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Row(
@@ -290,7 +325,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                               const SizedBox(height: 24),
 
-                              // Login button
+                              // Nút đăng nhập.
                               SizedBox(
                                 height: 50,
                                 child: ElevatedButton(
@@ -321,17 +356,30 @@ class _LoginScreenState extends State<LoginScreen> {
                                         ),
                                 ),
                               ),
+
+                              const SizedBox(height: 12),
+
+                              // Nút chuyển sang màn hình đăng ký.
+                              TextButton(
+                                onPressed: _isLoading ? null : _openSignUp,
+                                child: const Text(
+                                  'Chưa có tài khoản? Đăng ký ngay',
+                                ),
+                              ),
                             ],
                           ),
                         ),
                       ),
 
-                      // Spacer to push footer to the bottom
+                      // Đẩy footer xuống cuối màn hình.
                       const Spacer(),
 
-                      // Footer
+                      // Footer.
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 24,
+                        ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
