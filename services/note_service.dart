@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
+import '../instance/main_instance.dart';
 import '../models/note.dart';
-import '../supabase/supabase_config.dart';
 
 class NoteService {
   static const String _homeTable = 'data_home';
@@ -10,21 +10,27 @@ class NoteService {
   static List<Note> cachedHomeNotes = [];
   static List<Note> cachedArchiveNotes = [];
 
-  /// Lấy data_home
+  /// Xóa cache bộ nhớ tạm khi đăng xuất hoặc đổi tài khoản
+  static void clearCache() {
+    cachedHomeNotes = [];
+    cachedArchiveNotes = [];
+  }
+
+  /// Lấy data_home theo id_user
   static Future<List<Note>> getHomeNotes() async {
     final list = await _fetchNotesFromTable(_homeTable);
     cachedHomeNotes = list;
     return list;
   }
 
-  /// Lấy data_archive
+  /// Lấy data_archive theo id_user
   static Future<List<Note>> getArchiveNotes() async {
     final list = await _fetchNotesFromTable(_archiveTable);
     cachedArchiveNotes = list;
     return list;
   }
 
-  /// Lưu ghi chú
+  /// Lưu ghi chú (chỉ định id_user của tài khoản đang đăng nhập)
   static Future<void> saveNote({
     Note? existingNote,
     required String title,
@@ -52,11 +58,12 @@ class NoteService {
 
     final table = isArchive ? _archiveTable : _homeTable;
     final nowUtc = DateTime.now().toUtc().toIso8601String();
+    final userId = UserInstance.idUser ?? await UserInstance.getIdUser();
 
     try {
       if (existingNote != null) {
         // Cập nhật ghi chú đã tồn tại
-        final updates = {
+        final updates = <String, dynamic>{
           'title': trimmedTitle,
           'content': trimmedContent,
           'pin': pin,
@@ -78,14 +85,17 @@ class NoteService {
               .eq('title', existingNote.title);
         }
       } else {
-        // Tạo mới ghi chú
-        await supabase.from(table).insert({
+        // Tạo mới ghi chú kèm id_user
+        final newRecord = <String, dynamic>{
+          if (userId != null) 'id_user': userId,
           'title': trimmedTitle,
           'content': trimmedContent,
           'pin': pin,
           'color': color,
           'edited_at': nowUtc,
-        });
+        };
+
+        await supabase.from(table).insert(newRecord);
       }
     } catch (e) {
       debugPrint('NoteService.saveNote error: $e');
@@ -109,10 +119,12 @@ class NoteService {
     }
 
     final nowUtc = DateTime.now().toUtc().toIso8601String();
+    final userId = existingNote?.userId ?? UserInstance.idUser ?? await UserInstance.getIdUser();
 
     try {
-      // 1. Thêm vào data_archive
+      // 1. Thêm vào data_archive kèm id_user
       await supabase.from(_archiveTable).insert({
+        if (userId != null) 'id_user': userId,
         'title': trimmedTitle,
         'content': trimmedContent,
         'pin': pin,
@@ -146,10 +158,12 @@ class NoteService {
     }
 
     final nowUtc = DateTime.now().toUtc().toIso8601String();
+    final userId = existingNote?.userId ?? UserInstance.idUser ?? await UserInstance.getIdUser();
 
     try {
-      // 1. Thêm vào data_home
+      // 1. Thêm vào data_home kèm id_user
       await supabase.from(_homeTable).insert({
+        if (userId != null) 'id_user': userId,
         'title': trimmedTitle,
         'content': trimmedContent,
         'pin': pin,
@@ -177,12 +191,19 @@ class NoteService {
     }
   }
 
-  //Load ghi chú từ bảng data_home hoặc data_archive
+  /// Load ghi chú từ bảng data_home hoặc data_archive theo id_user
   static Future<List<Note>> _fetchNotesFromTable(String tableName) async {
     try {
-      final data = await supabase
-          .from(tableName)
-          .select()
+      final userId = UserInstance.idUser ?? await UserInstance.getIdUser();
+
+      var query = supabase.from(tableName).select();
+
+      // Chỉ lấy nội dung của id_user đang đăng nhập
+      if (userId != null) {
+        query = query.eq('id_user', userId);
+      }
+
+      final data = await query
           .order('pin', ascending: false)
           .order('edited_at', ascending: false);
 
@@ -193,7 +214,7 @@ class NoteService {
     }
   }
 
-  // Xóa một hàng nào đó
+  /// Xóa một hàng nào đó
   static Future<void> _deleteRecordFromTable(
     String tableName,
     Note note,

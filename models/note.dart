@@ -1,5 +1,6 @@
 class Note {
   final int? id;
+  final int? userId;
   final String title;
   final String content;
   final bool pin;
@@ -10,6 +11,7 @@ class Note {
   // Constructor
   const Note({
     this.id,
+    this.userId,
     this.title = '',
     this.content = '',
     this.pin = false,
@@ -24,6 +26,11 @@ class Note {
       id: map['id'] is int
           ? map['id'] as int
           : (map['id'] != null ? int.tryParse(map['id'].toString()) : null),
+      userId: map['id_user'] is int
+          ? map['id_user'] as int
+          : (map['id_user'] != null
+              ? int.tryParse(map['id_user'].toString())
+              : null),
       title: map['title']?.toString() ?? '',
       content: map['content']?.toString() ?? '',
       pin: map['pin'] == true,
@@ -41,11 +48,12 @@ class Note {
   Map<String, dynamic> toMap() {
     return {
       if (id != null) 'id': id,
+      if (userId != null) 'id_user': userId,
       'title': title,
       'content': content,
       'pin': pin,
       'color': color,
-      'created_at': createdAt,
+      if (createdAt != null) 'created_at': createdAt!.toIso8601String(),
       'edited_at': (editedAt ?? DateTime.now().toUtc()).toIso8601String(),
     };
   }
@@ -53,6 +61,7 @@ class Note {
   // Tạo một bản sao của note, được sử dụng trong khi thay đổi nội dung
   Note copyWith({
     int? id,
+    int? userId,
     String? title,
     String? content,
     bool? pin,
@@ -62,6 +71,7 @@ class Note {
   }) {
     return Note(
       id: id ?? this.id,
+      userId: userId ?? this.userId,
       title: title ?? this.title,
       content: content ?? this.content,
       pin: pin ?? this.pin,

@@ -1,18 +1,8 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
-import 'settings_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
-  final String currentTheme;
-  final String currentColor;
-  final OnThemeColorChanged onThemeChanged;
-
-  const WelcomeScreen({
-    super.key,
-    required this.currentTheme,
-    required this.currentColor,
-    required this.onThemeChanged,
-  });
+  const WelcomeScreen({super.key});
 
   @override
   State<WelcomeScreen> createState() => _WelcomeScreenState();
@@ -27,11 +17,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => LoginScreen(
-            currentTheme: widget.currentTheme,
-            currentColor: widget.currentColor,
-            onThemeChanged: widget.onThemeChanged,
-          ),
+          builder: (context) => const LoginScreen(),
         ),
       );
     });
@@ -41,8 +27,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Center(
-        child: Image.asset('assets/welcome/welcome_gdg_probation.gif'),
+      body: SafeArea(
+        child: Center(
+          child: Image.asset('assets/welcome/welcome_gdg_probation.gif'),
+        ),
       ),
     );
   }

@@ -1,18 +1,8 @@
 import 'package:flutter/material.dart';
-
-typedef OnThemeColorChanged = void Function(String theme, String color);
+import '../instance/main_instance.dart';
 
 class SettingsScreen extends StatefulWidget {
-  final String currentTheme;
-  final String currentColor;
-  final OnThemeColorChanged onThemeChanged;
-
-  const SettingsScreen({
-    super.key,
-    required this.currentTheme,
-    required this.currentColor,
-    required this.onThemeChanged,
-  });
+  const SettingsScreen({super.key});
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -25,8 +15,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
-    _choice = widget.currentTheme;
-    _choice2 = widget.currentColor;
+    _choice = ThemeInstance.currentTheme;
+    _choice2 = ThemeInstance.currentColor;
+  }
+
+  void _onThemeOrColorChanged() {
+    ThemeInstance.updateTheme(_choice, _choice2);
   }
 
   @override
@@ -46,127 +40,129 @@ class _SettingsScreenState extends State<SettingsScreen> {
           },
         ),
       ),
-      body: ListView(
-        children: [
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text(
-              "Theme",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      body: SafeArea(
+        child: ListView(
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                "Theme",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
             ),
-          ),
-          RadioListTile<String>(
-            title: const Text("System"),
-            value: 'system',
-            groupValue: _choice,
-            onChanged: (String? value) {
-              if (value != null) {
-                setState(() {
-                  _choice = value;
-                });
-                widget.onThemeChanged(_choice, _choice2);
-              }
-            },
-          ),
-          RadioListTile<String>(
-            title: const Text("LightMode"),
-            value: 'light',
-            groupValue: _choice,
-            onChanged: (String? value) {
-              if (value != null) {
-                setState(() {
-                  _choice = value;
-                });
-                widget.onThemeChanged(_choice, _choice2);
-              }
-            },
-          ),
-          RadioListTile<String>(
-            title: const Text("DarkMode"),
-            value: 'dark',
-            groupValue: _choice,
-            onChanged: (String? value) {
-              if (value != null) {
-                setState(() {
-                  _choice = value;
-                });
-                widget.onThemeChanged(_choice, _choice2);
-              }
-            },
-          ),
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text(
-              "Color",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            RadioListTile<String>(
+              title: const Text("System"),
+              value: 'system',
+              groupValue: _choice,
+              onChanged: (String? value) {
+                if (value != null) {
+                  setState(() {
+                    _choice = value;
+                  });
+                  _onThemeOrColorChanged();
+                }
+              },
             ),
-          ),
-          RadioListTile<String>(
-            title: const Text("Default (Yellow)"),
-            value: 'yellow',
-            groupValue: _choice2,
-            onChanged: (String? value) {
-              if (value != null) {
-                setState(() {
-                  _choice2 = value;
-                });
-                widget.onThemeChanged(_choice, _choice2);
-              }
-            },
-          ),
-          RadioListTile<String>(
-            title: const Text("Green"),
-            value: 'green',
-            groupValue: _choice2,
-            onChanged: (String? value) {
-              if (value != null) {
-                setState(() {
-                  _choice2 = value;
-                });
-                widget.onThemeChanged(_choice, _choice2);
-              }
-            },
-          ),
-          RadioListTile<String>(
-            title: const Text("Blue"),
-            value: 'blue',
-            groupValue: _choice2,
-            onChanged: (String? value) {
-              if (value != null) {
-                setState(() {
-                  _choice2 = value;
-                });
-                widget.onThemeChanged(_choice, _choice2);
-              }
-            },
-          ),
-          RadioListTile<String>(
-            title: const Text("Red"),
-            value: 'red',
-            groupValue: _choice2,
-            onChanged: (String? value) {
-              if (value != null) {
-                setState(() {
-                  _choice2 = value;
-                });
-                widget.onThemeChanged(_choice, _choice2);
-              }
-            },
-          ),
-          RadioListTile<String>(
-            title: const Text("Pink"),
-            value: 'pink',
-            groupValue: _choice2,
-            onChanged: (String? value) {
-              if (value != null) {
-                setState(() {
-                  _choice2 = value;
-                });
-                widget.onThemeChanged(_choice, _choice2);
-              }
-            },
-          ),
-        ],
+            RadioListTile<String>(
+              title: const Text("LightMode"),
+              value: 'light',
+              groupValue: _choice,
+              onChanged: (String? value) {
+                if (value != null) {
+                  setState(() {
+                    _choice = value;
+                  });
+                  _onThemeOrColorChanged();
+                }
+              },
+            ),
+            RadioListTile<String>(
+              title: const Text("DarkMode"),
+              value: 'dark',
+              groupValue: _choice,
+              onChanged: (String? value) {
+                if (value != null) {
+                  setState(() {
+                    _choice = value;
+                  });
+                  _onThemeOrColorChanged();
+                }
+              },
+            ),
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                "Color",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            RadioListTile<String>(
+              title: const Text("Default (Yellow)"),
+              value: 'yellow',
+              groupValue: _choice2,
+              onChanged: (String? value) {
+                if (value != null) {
+                  setState(() {
+                    _choice2 = value;
+                  });
+                  _onThemeOrColorChanged();
+                }
+              },
+            ),
+            RadioListTile<String>(
+              title: const Text("Green"),
+              value: 'green',
+              groupValue: _choice2,
+              onChanged: (String? value) {
+                if (value != null) {
+                  setState(() {
+                    _choice2 = value;
+                  });
+                  _onThemeOrColorChanged();
+                }
+              },
+            ),
+            RadioListTile<String>(
+              title: const Text("Blue"),
+              value: 'blue',
+              groupValue: _choice2,
+              onChanged: (String? value) {
+                if (value != null) {
+                  setState(() {
+                    _choice2 = value;
+                  });
+                  _onThemeOrColorChanged();
+                }
+              },
+            ),
+            RadioListTile<String>(
+              title: const Text("Red"),
+              value: 'red',
+              groupValue: _choice2,
+              onChanged: (String? value) {
+                if (value != null) {
+                  setState(() {
+                    _choice2 = value;
+                  });
+                  _onThemeOrColorChanged();
+                }
+              },
+            ),
+            RadioListTile<String>(
+              title: const Text("Pink"),
+              value: 'pink',
+              groupValue: _choice2,
+              onChanged: (String? value) {
+                if (value != null) {
+                  setState(() {
+                    _choice2 = value;
+                  });
+                  _onThemeOrColorChanged();
+                }
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

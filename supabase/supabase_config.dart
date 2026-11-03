@@ -1,7 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+export '../instance/supabase_instance.dart';
 
 class SupabaseConfig {
-
   static const String url = 'https://sfzzebjtcktaoegwazzl.supabase.co';
   static const String publishableKey = 'sb_publishable_O-FwBm_FXthBVn4zLzhwkA_LS_D6e-C';
 
@@ -12,5 +12,3 @@ class SupabaseConfig {
     );
   }
 }
-
-final supabase = Supabase.instance.client;

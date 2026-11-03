@@ -1,18 +1,12 @@
 import 'package:flutter/material.dart';
+import '../instance/main_instance.dart';
+import '../services/login_service.dart';
+import '../services/note_service.dart';
 import 'home_screen.dart';
-import 'settings_screen.dart';
+import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  final String currentTheme;
-  final String currentColor;
-  final OnThemeColorChanged onThemeChanged;
-
-  const LoginScreen({
-    super.key,
-    required this.currentTheme,
-    required this.currentColor,
-    required this.onThemeChanged,
-  });
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -34,7 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     setState(() {
       _errorMessage = null;
     });
@@ -50,11 +44,13 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = true;
     });
 
-    // Giả lập xử lý đăng nhập ngắn tạo cảm giác mượt mà
-    Future.delayed(const Duration(milliseconds: 300), () {
+    try {
+      final userId = await LoginService.login(username, password);
+
       if (!mounted) return;
 
-      if (username == 'admin' && password == '123') {
+      if (userId != null) {
+        NoteService.clearCache();
         setState(() {
           _isLoading = false;
         });
@@ -62,11 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => HomeScreen(
-              currentTheme: widget.currentTheme,
-              currentColor: widget.currentColor,
-              onThemeChanged: widget.onThemeChanged,
-            ),
+            builder: (context) => const HomeScreen(),
           ),
         );
       } else {
@@ -75,7 +67,65 @@ class _LoginScreenState extends State<LoginScreen> {
           _errorMessage = 'Tài khoản hoặc mật khẩu không chính xác!';
         });
       }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Lỗi kết nối máy chủ: $e';
+      });
+    }
+  }
+
+  Future<void> _navigateToSignUp() async {
+    setState(() {
+      _errorMessage = null;
     });
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const SignUpScreen(),
+      ),
+    );
+
+    if (!mounted || result == null) return;
+
+    String? status;
+    String? username;
+
+    if (result is Map) {
+      status = result['status']?.toString();
+      username = result['username']?.toString();
+    } else if (result is String) {
+      status = result;
+    }
+
+    if (username != null && username.isNotEmpty) {
+      _usernameController.text = username;
+      _passwordController.clear();
+    }
+
+    if (status == 'verify') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản trước khi đăng nhập.',
+          ),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } else if (status == 'created') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Tạo tài khoản thành công! Bạn có thể đăng nhập ngay.',
+          ),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
@@ -103,12 +153,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       // Header image
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(35, 16, 35, 12),
+                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
                         child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
                           child: Image.asset(
                             'assets/login/header.png',
                             width: double.infinity,
-                            fit: BoxFit.fitWidth,
+                            fit: BoxFit.contain,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
                                 height: 100,
@@ -320,6 +371,33 @@ class _LoginScreenState extends State<LoginScreen> {
                                           ),
                                         ),
                                 ),
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              // Phần đăng ký tài khoản (Sign up)
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'Chưa có tài khoản? ',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: _isLoading ? null : _navigateToSignUp,
+                                    child: Text(
+                                      'Đăng ký ngay',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: colorScheme.primary,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),

@@ -309,52 +309,54 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
             const SizedBox(width: 15),
           ],
         ),
-        body: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            children: [
-              // Tiêu đề
-              TextField(
-                controller: _titleController,
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w400,
-                  color: colorScheme.onSurface,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Tiêu đề',
-                  hintStyle: TextStyle(
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              children: [
+                // Tiêu đề
+                TextField(
+                  controller: _titleController,
+                  style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w400,
-                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                  ),
-                  border: InputBorder.none,
-                ),
-                maxLines: null,
-              ),
-
-              // Nội dung ghi chú
-              Expanded(
-                child: TextField(
-                  controller: _contentController,
-                  style: TextStyle(
-                    fontSize: 16,
                     color: colorScheme.onSurface,
                   ),
                   decoration: InputDecoration(
-                    hintText: 'Ghi chú',
+                    hintText: 'Tiêu đề',
                     hintStyle: TextStyle(
-                      fontSize: 16,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w400,
                       color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                     ),
                     border: InputBorder.none,
                   ),
                   maxLines: null,
-                  expands: true,
-                  textAlignVertical: TextAlignVertical.top,
                 ),
-              ),
-            ],
+
+                // Nội dung ghi chú
+                Expanded(
+                  child: TextField(
+                    controller: _contentController,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: colorScheme.onSurface,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Ghi chú',
+                      hintStyle: TextStyle(
+                        fontSize: 16,
+                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                      ),
+                      border: InputBorder.none,
+                    ),
+                    maxLines: null,
+                    expands: true,
+                    textAlignVertical: TextAlignVertical.top,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

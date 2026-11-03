@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../instance/main_instance.dart';
 import '../models/note.dart';
 import '../models/note_sort.dart';
 import '../services/note_service.dart';
@@ -12,16 +13,7 @@ import 'settings_screen.dart';
 import '../widgets/note_loading.dart';
 
 class HomeScreen extends StatefulWidget {
-  final String currentTheme;
-  final String currentColor;
-  final OnThemeColorChanged onThemeChanged;
-
-  const HomeScreen({
-    super.key,
-    required this.currentTheme,
-    required this.currentColor,
-    required this.onThemeChanged,
-  });
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -267,11 +259,8 @@ class _HomeScreenState extends State<HomeScreen> {
       key: _scaffoldKey,
       backgroundColor: theme.scaffoldBackgroundColor,
 
-      drawer: KeepDrawer(
+      drawer: const KeepDrawer(
         selectedIndex: 0,
-        currentTheme: widget.currentTheme,
-        currentColor: widget.currentColor,
-        onThemeChanged: widget.onThemeChanged,
       ),
 
       body: SafeArea(

@@ -1,21 +1,18 @@
 import 'package:flutter/material.dart';
+import '../instance/main_instance.dart';
 import '../screens/home_screen.dart';
 import '../screens/archive_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/login_screen.dart';
+import '../services/login_service.dart';
+import '../services/note_service.dart';
 
 class KeepDrawer extends StatelessWidget {
   final int selectedIndex;
-  final String currentTheme;
-  final String currentColor;
-  final OnThemeColorChanged onThemeChanged;
 
   const KeepDrawer({
     super.key,
     this.selectedIndex = 0,
-    required this.currentTheme,
-    required this.currentColor,
-    required this.onThemeChanged,
   });
 
   @override
@@ -58,11 +55,7 @@ class KeepDrawer extends StatelessWidget {
                   } else {
                     navigator.pushReplacement(
                       MaterialPageRoute(
-                        builder: (_) => HomeScreen(
-                          currentTheme: currentTheme,
-                          currentColor: currentColor,
-                          onThemeChanged: onThemeChanged,
-                        ),
+                        builder: (_) => const HomeScreen(),
                       ),
                     );
                   }
@@ -81,11 +74,7 @@ class KeepDrawer extends StatelessWidget {
                 if (selectedIndex != 1) {
                   navigator.push(
                     MaterialPageRoute(
-                      builder: (_) => ArchiveScreen(
-                        currentTheme: currentTheme,
-                        currentColor: currentColor,
-                        onThemeChanged: onThemeChanged,
-                      ),
+                      builder: (_) => const ArchiveScreen(),
                     ),
                   );
                 }
@@ -104,11 +93,7 @@ class KeepDrawer extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => SettingsScreen(
-                      currentTheme: currentTheme,
-                      currentColor: currentColor,
-                      onThemeChanged: onThemeChanged,
-                    ),
+                    builder: (_) => const SettingsScreen(),
                   ),
                 );
               },
@@ -119,16 +104,14 @@ class KeepDrawer extends StatelessWidget {
               icon: Icons.logout,
               label: 'Đăng xuất',
               isSelected: false,
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushAndRemoveUntil(
-                  context,
+              onTap: () async {
+                final navigator = Navigator.of(context);
+                navigator.pop();
+                await LoginService.logout();
+                NoteService.clearCache();
+                navigator.pushAndRemoveUntil(
                   MaterialPageRoute(
-                    builder: (_) => LoginScreen(
-                      currentTheme: currentTheme,
-                      currentColor: currentColor,
-                      onThemeChanged: onThemeChanged,
-                    ),
+                    builder: (_) => const LoginScreen(),
                   ),
                   (route) => false,
                 );
