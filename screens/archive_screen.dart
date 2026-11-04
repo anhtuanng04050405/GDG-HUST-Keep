@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../instance/main_instance.dart';
 import '../models/note.dart';
 import '../models/note_sort.dart';
 import '../services/note_service.dart';
@@ -9,7 +8,6 @@ import '../widgets/app_drawer.dart';
 import '../widgets/card_view.dart';
 import '../widgets/note_loading.dart';
 import 'note_editor_screen.dart';
-import 'settings_screen.dart';
 
 class ArchiveScreen extends StatefulWidget {
   const ArchiveScreen({super.key});
@@ -146,10 +144,14 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
 
                     // Xóa khỏi danh sách lưu trữ ngay lập tức
                     setState(() {
-                      _notes.removeWhere((n) =>
-                          (n.id != null && n.id == note.id) ||
-                          (n.createdAt != null && n.createdAt == note.createdAt) ||
-                          (n.title == note.title && n.content == note.content));
+                      _notes.removeWhere(
+                        (n) =>
+                            (n.id != null && n.id == note.id) ||
+                            (n.createdAt != null &&
+                                n.createdAt == note.createdAt) ||
+                            (n.title == note.title &&
+                                n.content == note.content),
+                      );
                     });
 
                     try {
@@ -182,10 +184,14 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
 
                     // Xóa khỏi danh sách lưu trữ ngay lập tức
                     setState(() {
-                      _notes.removeWhere((n) =>
-                          (n.id != null && n.id == note.id) ||
-                          (n.createdAt != null && n.createdAt == note.createdAt) ||
-                          (n.title == note.title && n.content == note.content));
+                      _notes.removeWhere(
+                        (n) =>
+                            (n.id != null && n.id == note.id) ||
+                            (n.createdAt != null &&
+                                n.createdAt == note.createdAt) ||
+                            (n.title == note.title &&
+                                n.content == note.content),
+                      );
                     });
 
                     try {
@@ -224,9 +230,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       key: _scaffoldKey,
       backgroundColor: theme.scaffoldBackgroundColor,
 
-      drawer: const KeepDrawer(
-        selectedIndex: 1,
-      ),
+      drawer: const KeepDrawer(selectedIndex: 1),
 
       appBar: AppBar(
         title: Text(

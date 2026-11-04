@@ -1,47 +1,8 @@
-import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+/// Tương thích với code cũ. UID lấy từ session Supabase Auth,
+/// không lưu riêng ID cục bộ (vốn có thể bị thay đổi trên thiết bị).
 class UserInstance {
-  static const String _keyUserId = 'current_id_user';
-
-  /// Biến tĩnh lưu id_user
-  static int? idUser;
-
-  static bool get isLoggedIn => idUser != null;
-
-  static Future<int?> init() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      idUser = prefs.getInt(_keyUserId);
-      debugPrint('UserInstance.init: id_user = $idUser');
-      return idUser;
-    } catch (e) {
-      debugPrint('UserInstance.init error: $e');
-      return null;
-    }
-  }
-
-  static Future<int?> getIdUser() async {
-    if (idUser != null) return idUser;
-    return await init();
-  }
-
-  static Future<void> setUserId(int? id) async {
-    idUser = id;
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      if (id != null) {
-        await prefs.setInt(_keyUserId, id);
-      } else {
-        await prefs.remove(_keyUserId);
-      }
-      debugPrint('UserInstance: Cập nhật id_user = $id');
-    } catch (e) {
-      debugPrint('UserInstance.setUserId error: $e');
-    }
-  }
-
-  static Future<void> clear() async {
-    await setUserId(null);
-  }
+  static String? get idUser => Supabase.instance.client.auth.currentSession?.user.id;
+  static bool get isLoggedIn => Supabase.instance.client.auth.currentSession != null;
 }

@@ -5,14 +5,8 @@ import 'supabase/supabase_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  try {
-    await SupabaseConfig.initialize();
-  } catch (e) {
-    debugPrint('Supabase init error: $e');
-  }
-
-  // Khởi tạo các instance dùng chung
-  await UserInstance.init();
+  // Auth phải khởi tạo thành công trước khi mở ứng dụng.
+  await SupabaseConfig.initialize();
   await ThemeInstance.init();
 
   runApp(const MyApp());

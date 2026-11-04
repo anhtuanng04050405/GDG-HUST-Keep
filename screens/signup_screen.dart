@@ -49,10 +49,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
       if (!mounted) return;
 
-      // Trả kết quả kèm tên đăng nhập về màn hình đăng nhập để hiển thị thông báo & tự điền
+      // Trả về email (không dùng username làm tài khoản đăng nhập).
       Navigator.pop(context, {
         'status': response.session == null ? 'verify' : 'created',
-        'username': _usernameController.text.trim(),
+        'email': _emailController.text.trim(),
       });
     } on AuthException catch (e) {
       if (!mounted) return;

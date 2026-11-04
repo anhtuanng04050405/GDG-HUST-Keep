@@ -1,0 +1,18 @@
+# Flutter/Dart local cache
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+
+# IDE / OS
+.idea/
+*.iml
+.DS_Store
+
+# Local development credentials and machine configuration
+android/local.properties
+android/key.properties
+**/*.jks
+**/*.keystore
+
+# Do NOT ignore pubspec.lock: application dependency versions should be pinned.

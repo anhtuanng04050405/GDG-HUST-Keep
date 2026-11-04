@@ -1,6 +1,6 @@
 class Note {
   final int? id;
-  final int? userId;
+  final String? userId;
   final String title;
   final String content;
   final bool pin;
@@ -26,11 +26,7 @@ class Note {
       id: map['id'] is int
           ? map['id'] as int
           : (map['id'] != null ? int.tryParse(map['id'].toString()) : null),
-      userId: map['id_user'] is int
-          ? map['id_user'] as int
-          : (map['id_user'] != null
-              ? int.tryParse(map['id_user'].toString())
-              : null),
+      userId: map['user_id']?.toString(),
       title: map['title']?.toString() ?? '',
       content: map['content']?.toString() ?? '',
       pin: map['pin'] == true,
@@ -48,7 +44,7 @@ class Note {
   Map<String, dynamic> toMap() {
     return {
       if (id != null) 'id': id,
-      if (userId != null) 'id_user': userId,
+      if (userId != null) 'user_id': userId,
       'title': title,
       'content': content,
       'pin': pin,
@@ -61,7 +57,7 @@ class Note {
   // Tạo một bản sao của note, được sử dụng trong khi thay đổi nội dung
   Note copyWith({
     int? id,
-    int? userId,
+    String? userId,
     String? title,
     String? content,
     bool? pin,

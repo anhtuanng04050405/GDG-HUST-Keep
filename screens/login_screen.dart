@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../instance/main_instance.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../services/login_service.dart';
 import '../services/note_service.dart';
 import 'home_screen.dart';
@@ -14,7 +15,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
   bool _obscurePassword = true;
@@ -23,7 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -37,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    final username = _usernameController.text.trim();
+    final email = _emailController.text.trim();
     final password = _passwordController.text;
 
     setState(() {
@@ -45,33 +46,29 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      final userId = await LoginService.login(username, password);
+      await LoginService.login(email, password);
 
       if (!mounted) return;
 
-      if (userId != null) {
-        NoteService.clearCache();
-        setState(() {
-          _isLoading = false;
-        });
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const HomeScreen(),
-          ),
-        );
-      } else {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = 'Tài khoản hoặc mật khẩu không chính xác!';
-        });
-      }
+      NoteService.clearCache();
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      final needsConfirmation = e.message.toLowerCase().contains('email not confirmed');
+      setState(() {
+        _isLoading = false;
+        _errorMessage = needsConfirmation
+            ? 'Vui lòng xác nhận email trước khi đăng nhập.'
+            : e.message;
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Lỗi kết nối máy chủ: $e';
+        _errorMessage = 'Không thể đăng nhập. Vui lòng thử lại.';
       });
     }
   }
@@ -91,17 +88,17 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted || result == null) return;
 
     String? status;
-    String? username;
+    String? email;
 
     if (result is Map) {
       status = result['status']?.toString();
-      username = result['username']?.toString();
+      email = result['email']?.toString();
     } else if (result is String) {
       status = result;
     }
 
-    if (username != null && username.isNotEmpty) {
-      _usernameController.text = username;
+    if (email != null && email.isNotEmpty) {
+      _emailController.text = email;
       _passwordController.clear();
     }
 
@@ -116,6 +113,14 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
     } else if (status == 'created') {
+      if (Supabase.instance.client.auth.currentSession != null) {
+        NoteService.clearCache();
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -223,12 +228,14 @@ class _LoginScreenState extends State<LoginScreen> {
                             children: [
                               // Username field
                               TextFormField(
-                                controller: _usernameController,
+                                controller: _emailController,
                                 textInputAction: TextInputAction.next,
+                                keyboardType: TextInputType.emailAddress,
+                                autofillHints: const [AutofillHints.email],
                                 decoration: InputDecoration(
-                                  labelText: 'Tên đăng nhập',
-                                  hintText: 'Nhập tên đăng nhập',
-                                  prefixIcon: const Icon(Icons.person_outline),
+                                  labelText: 'Email',
+                                  hintText: 'Nhập email',
+                                  prefixIcon: const Icon(Icons.email_outlined),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(14),
                                   ),
@@ -250,7 +257,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 validator: (value) {
                                   if (value == null || value.trim().isEmpty) {
-                                    return 'Vui lòng nhập tên đăng nhập';
+                                    return 'Vui lòng nhập email';
+                                  }
+                                  if (!value.contains('@')) {
+                                    return 'Email không hợp lệ';
                                   }
                                   return null;
                                 },

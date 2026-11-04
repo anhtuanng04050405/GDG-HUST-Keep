@@ -1,36 +1,40 @@
 import 'package:flutter/foundation.dart';
-import '../instance/main_instance.dart';
+import '../instance/supabase_instance.dart';
 import '../models/note.dart';
 
 class NoteService {
   static const String _homeTable = 'data_home';
   static const String _archiveTable = 'data_archive';
 
-  /// Bộ nhớ tạm ngầm cho màn hình Home và Archive
   static List<Note> cachedHomeNotes = [];
   static List<Note> cachedArchiveNotes = [];
 
-  /// Xóa cache bộ nhớ tạm khi đăng xuất hoặc đổi tài khoản
   static void clearCache() {
     cachedHomeNotes = [];
     cachedArchiveNotes = [];
   }
 
-  /// Lấy data_home theo id_user
+  // Không bao giờ truy vấn ghi chú khi chưa có session thực.
+  static String _requireUserId() {
+    final uid = supabase.auth.currentSession?.user.id;
+    if (uid == null) {
+      throw StateError('Vui lòng đăng nhập để truy cập ghi chú.');
+    }
+    return uid;
+  }
+
   static Future<List<Note>> getHomeNotes() async {
-    final list = await _fetchNotesFromTable(_homeTable);
-    cachedHomeNotes = list;
-    return list;
+    final data = await _fetchNotesFromTable(_homeTable);
+    cachedHomeNotes = data;
+    return data;
   }
 
-  /// Lấy data_archive theo id_user
   static Future<List<Note>> getArchiveNotes() async {
-    final list = await _fetchNotesFromTable(_archiveTable);
-    cachedArchiveNotes = list;
-    return list;
+    final data = await _fetchNotesFromTable(_archiveTable);
+    cachedArchiveNotes = data;
+    return data;
   }
 
-  /// Lưu ghi chú (chỉ định id_user của tài khoản đang đăng nhập)
   static Future<void> saveNote({
     Note? existingNote,
     required String title,
@@ -39,15 +43,13 @@ class NoteService {
     String color = 'default',
     bool isArchive = false,
   }) async {
+    final uid = _requireUserId();
     final trimmedTitle = title.trim();
     final trimmedContent = content.trim();
 
-    // Nếu là ghi chú mới và cả 2 trường đều trống thì không lưu
     if (existingNote == null && trimmedTitle.isEmpty && trimmedContent.isEmpty) {
       return;
     }
-
-    // Nếu không có gì thay đổi so với dữ liệu cũ thì bỏ qua
     if (existingNote != null &&
         existingNote.title.trim() == trimmedTitle &&
         existingNote.content.trim() == trimmedContent &&
@@ -58,44 +60,35 @@ class NoteService {
 
     final table = isArchive ? _archiveTable : _homeTable;
     final nowUtc = DateTime.now().toUtc().toIso8601String();
-    final userId = UserInstance.idUser ?? await UserInstance.getIdUser();
 
     try {
       if (existingNote != null) {
-        // Cập nhật ghi chú đã tồn tại
-        final updates = <String, dynamic>{
+        _checkOwnedNote(existingNote, uid);
+        final changes = <String, dynamic>{
           'title': trimmedTitle,
           'content': trimmedContent,
           'pin': pin,
           'color': color,
           'edited_at': nowUtc,
         };
-
-        if (existingNote.id != null) {
-          await supabase.from(table).update(updates).eq('id', existingNote.id!);
-        } else if (existingNote.createdAt != null) {
-          await supabase
-              .from(table)
-              .update(updates)
-              .eq('created_at', existingNote.createdAt!.toIso8601String());
-        } else {
-          await supabase
-              .from(table)
-              .update(updates)
-              .eq('title', existingNote.title);
+        final updated = await supabase.from(table)
+            .update(changes)
+            .eq('id', existingNote.id!)
+            .eq('user_id', uid)
+            .select('id')
+            .maybeSingle();
+        if (updated == null) {
+          throw StateError('Không thể sửa ghi chú: bản ghi đã mất hoặc không thuộc tài khoản này.');
         }
       } else {
-        // Tạo mới ghi chú kèm id_user
-        final newRecord = <String, dynamic>{
-          if (userId != null) 'id_user': userId,
+        await supabase.from(table).insert({
+          'user_id': uid,
           'title': trimmedTitle,
           'content': trimmedContent,
           'pin': pin,
           'color': color,
           'edited_at': nowUtc,
-        };
-
-        await supabase.from(table).insert(newRecord);
+        });
       }
     } catch (e) {
       debugPrint('NoteService.saveNote error: $e');
@@ -103,7 +96,6 @@ class NoteService {
     }
   }
 
-  /// data_home -> data_archive
   static Future<void> archiveNote({
     Note? existingNote,
     required String title,
@@ -111,38 +103,17 @@ class NoteService {
     required bool pin,
     String color = 'default',
   }) async {
-    final trimmedTitle = title.trim();
-    final trimmedContent = content.trim();
-
-    if (existingNote == null && trimmedTitle.isEmpty && trimmedContent.isEmpty) {
-      return;
-    }
-
-    final nowUtc = DateTime.now().toUtc().toIso8601String();
-    final userId = existingNote?.userId ?? UserInstance.idUser ?? await UserInstance.getIdUser();
-
-    try {
-      // 1. Thêm vào data_archive kèm id_user
-      await supabase.from(_archiveTable).insert({
-        if (userId != null) 'id_user': userId,
-        'title': trimmedTitle,
-        'content': trimmedContent,
-        'pin': pin,
-        'color': color,
-        'edited_at': nowUtc,
-      });
-
-      // 2. Xóa khỏi data_home nếu ghi chú đã tồn tại
-      if (existingNote != null) {
-        await _deleteRecordFromTable(_homeTable, existingNote);
-      }
-    } catch (e) {
-      debugPrint('NoteService.archiveNote error: $e');
-      rethrow;
-    }
+    await _moveNote(
+      source: _homeTable,
+      destination: _archiveTable,
+      existingNote: existingNote,
+      title: title,
+      content: content,
+      pin: pin,
+      color: color,
+    );
   }
 
-  /// data_archive -> data_home
   static Future<void> unarchiveNote({
     Note? existingNote,
     required String title,
@@ -150,84 +121,104 @@ class NoteService {
     required bool pin,
     String color = 'default',
   }) async {
+    await _moveNote(
+      source: _archiveTable,
+      destination: _homeTable,
+      existingNote: existingNote,
+      title: title,
+      content: content,
+      pin: pin,
+      color: color,
+    );
+  }
+
+  static Future<void> _moveNote({
+    required String source,
+    required String destination,
+    required Note? existingNote,
+    required String title,
+    required String content,
+    required bool pin,
+    required String color,
+  }) async {
+    final uid = _requireUserId();
     final trimmedTitle = title.trim();
     final trimmedContent = content.trim();
-
     if (existingNote == null && trimmedTitle.isEmpty && trimmedContent.isEmpty) {
       return;
     }
+    if (existingNote != null) _checkOwnedNote(existingNote, uid);
 
-    final nowUtc = DateTime.now().toUtc().toIso8601String();
-    final userId = existingNote?.userId ?? UserInstance.idUser ?? await UserInstance.getIdUser();
-
-    try {
-      // 1. Thêm vào data_home kèm id_user
-      await supabase.from(_homeTable).insert({
-        if (userId != null) 'id_user': userId,
-        'title': trimmedTitle,
-        'content': trimmedContent,
-        'pin': pin,
-        'color': color,
-        'edited_at': nowUtc,
-      });
-
-      // 2. Xóa khỏi data_archive nếu ghi chú đã tồn tại
-      if (existingNote != null) {
-        await _deleteRecordFromTable(_archiveTable, existingNote);
+    // Trước khi di chuyển, xác nhận bản ghi nguồn còn tồn tại và thuộc user.
+    // Tránh tạo bản sao khi ghi chú đã bị xóa trên thiết bị khác.
+    if (existingNote != null) {
+      final sourceRecord = await supabase.from(source)
+          .select('id')
+          .eq('id', existingNote.id!)
+          .eq('user_id', uid)
+          .maybeSingle();
+      if (sourceRecord == null) {
+        throw StateError('Ghi chú không còn tồn tại hoặc không thuộc tài khoản này.');
       }
-    } catch (e) {
-      debugPrint('NoteService.unarchiveNote error: $e');
-      rethrow;
+    }
+
+    // Giữ hành vi hiện tại: copy sang bảng đích rồi xóa nguồn.
+    // Hai thao tác không atomic; nếu cần đảm bảo tuyệt đối, thay bằng RPC transaction.
+    await supabase.from(destination).insert({
+      'user_id': uid,
+      'title': trimmedTitle,
+      'content': trimmedContent,
+      'pin': pin,
+      'color': color,
+      'edited_at': DateTime.now().toUtc().toIso8601String(),
+    });
+
+    if (existingNote != null) {
+      await _deleteRecordFromTable(source, existingNote, uid);
     }
   }
 
-  /// Xóa vĩnh viễn
   static Future<void> deleteNote(Note note) async {
-    try {
-      await _deleteRecordFromTable(_archiveTable, note);
-    } catch (e) {
-      debugPrint('NoteService.deleteNote error: $e');
-      rethrow;
-    }
+    final uid = _requireUserId();
+    _checkOwnedNote(note, uid);
+    await _deleteRecordFromTable(_archiveTable, note, uid);
   }
 
-  /// Load ghi chú từ bảng data_home hoặc data_archive theo id_user
-  static Future<List<Note>> _fetchNotesFromTable(String tableName) async {
+  static Future<List<Note>> _fetchNotesFromTable(String table) async {
+    final uid = _requireUserId();
     try {
-      final userId = UserInstance.idUser ?? await UserInstance.getIdUser();
-
-      var query = supabase.from(tableName).select();
-
-      // Chỉ lấy nội dung của id_user đang đăng nhập
-      if (userId != null) {
-        query = query.eq('id_user', userId);
-      }
-
-      final data = await query
+      final rows = await supabase.from(table)
+          .select()
+          .eq('user_id', uid)
           .order('pin', ascending: false)
           .order('edited_at', ascending: false);
-
-      return (data as List).map((item) => Note.fromMap(item)).toList();
+      return (rows as List).map((row) => Note.fromMap(row)).toList();
     } catch (e) {
-      debugPrint('NoteService._fetchNotesFromTable ($tableName) error: $e');
+      debugPrint('NoteService.loadNotes ($table) error: $e');
       rethrow;
     }
   }
 
-  /// Xóa một hàng nào đó
+  // Chỉ cho phép tác động lên ID cụ thể của ghi chú đang sở hữu.
+  static void _checkOwnedNote(Note note, String uid) {
+    if (note.id == null || note.userId != uid) {
+      throw StateError('Ghi chú không hợp lệ hoặc không thuộc tài khoản hiện tại.');
+    }
+  }
+
   static Future<void> _deleteRecordFromTable(
-    String tableName,
+    String table,
     Note note,
+    String uid,
   ) async {
-    if (note.id != null) {
-      await supabase.from(tableName).delete().eq('id', note.id!);
-    } else if (note.createdAt != null) {
-      await supabase
-          .from(tableName)
-          .delete()
-          .eq('created_at', note.createdAt!.toIso8601String());
-    } else {
-      await supabase.from(tableName).delete().eq('title', note.title);
+    final deleted = await supabase.from(table)
+        .delete()
+        .eq('id', note.id!)
+        .eq('user_id', uid)
+        .select('id')
+        .maybeSingle();
+    if (deleted == null) {
+      throw StateError('Không thể xóa ghi chú: bản ghi đã mất hoặc không thuộc tài khoản này.');
     }
   }
 }

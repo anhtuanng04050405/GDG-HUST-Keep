@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../instance/main_instance.dart';
 import '../models/note.dart';
 import '../models/note_sort.dart';
 import '../services/note_service.dart';
@@ -9,7 +8,6 @@ import '../widgets/app_drawer.dart';
 import '../widgets/card_view.dart';
 import '../widgets/home_search_bar.dart';
 import 'note_editor_screen.dart';
-import 'settings_screen.dart';
 import '../widgets/note_loading.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -170,10 +168,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     // Cập nhật giao diện ngay lập tức trước khi gọi API
                     setState(() {
-                      final index = _notes.indexWhere((n) =>
-                          (n.id != null && n.id == note.id) ||
-                          (n.createdAt != null && n.createdAt == note.createdAt) ||
-                          (n.title == note.title && n.content == note.content));
+                      final index = _notes.indexWhere(
+                        (n) =>
+                            (n.id != null && n.id == note.id) ||
+                            (n.createdAt != null &&
+                                n.createdAt == note.createdAt) ||
+                            (n.title == note.title &&
+                                n.content == note.content),
+                      );
                       if (index != -1) {
                         _notes[index] = _notes[index].copyWith(pin: updatedPin);
                       }
@@ -191,7 +193,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            updatedPin ? 'Đã ghim ghi chú' : 'Đã bỏ ghim ghi chú',
+                            updatedPin
+                                ? 'Đã ghim ghi chú'
+                                : 'Đã bỏ ghim ghi chú',
                           ),
                           duration: const Duration(seconds: 2),
                         ),
@@ -211,10 +215,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     // Xóa khỏi danh sách giao diện ngay lập tức
                     setState(() {
-                      _notes.removeWhere((n) =>
-                          (n.id != null && n.id == note.id) ||
-                          (n.createdAt != null && n.createdAt == note.createdAt) ||
-                          (n.title == note.title && n.content == note.content));
+                      _notes.removeWhere(
+                        (n) =>
+                            (n.id != null && n.id == note.id) ||
+                            (n.createdAt != null &&
+                                n.createdAt == note.createdAt) ||
+                            (n.title == note.title &&
+                                n.content == note.content),
+                      );
                     });
 
                     try {
@@ -259,8 +267,12 @@ class _HomeScreenState extends State<HomeScreen> {
       key: _scaffoldKey,
       backgroundColor: theme.scaffoldBackgroundColor,
 
-      drawer: const KeepDrawer(
+      drawer: KeepDrawer(
         selectedIndex: 0,
+        onReturnFromArchive: () async {
+          if (!mounted) return;
+          await _fetchNotes();
+        },
       ),
 
       body: SafeArea(

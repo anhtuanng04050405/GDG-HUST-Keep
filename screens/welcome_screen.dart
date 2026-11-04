@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
+import 'home_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -17,7 +19,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => const LoginScreen(),
+          builder: (_) => Supabase.instance.client.auth.currentSession != null
+              ? const HomeScreen()
+              : const LoginScreen(),
         ),
       );
     });

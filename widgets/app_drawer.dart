@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../instance/main_instance.dart';
+
 import '../screens/home_screen.dart';
 import '../screens/archive_screen.dart';
 import '../screens/settings_screen.dart';
@@ -9,10 +9,12 @@ import '../services/note_service.dart';
 
 class KeepDrawer extends StatelessWidget {
   final int selectedIndex;
+  final Future<void> Function()? onReturnFromArchive;
 
   const KeepDrawer({
     super.key,
     this.selectedIndex = 0,
+    this.onReturnFromArchive,
   });
 
   @override
@@ -27,7 +29,6 @@ class KeepDrawer extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Tiêu đề
             Padding(
               padding: const EdgeInsets.fromLTRB(25, 20, 24, 8),
               child: Text(
@@ -40,8 +41,6 @@ class KeepDrawer extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 4),
-
-            // Ghi chú
             _DrawerItem(
               icon: Icons.lightbulb_outline,
               label: 'Ghi chú',
@@ -54,52 +53,43 @@ class KeepDrawer extends StatelessWidget {
                     navigator.pop();
                   } else {
                     navigator.pushReplacement(
-                      MaterialPageRoute(
-                        builder: (_) => const HomeScreen(),
-                      ),
+                      MaterialPageRoute(builder: (_) => const HomeScreen()),
                     );
                   }
                 }
               },
             ),
-
-            // Lưu trữ
             _DrawerItem(
               icon: Icons.archive_outlined,
               label: 'Lưu trữ',
               isSelected: selectedIndex == 1,
-              onTap: () {
+              onTap: () async {
                 final navigator = Navigator.of(context);
                 navigator.pop();
                 if (selectedIndex != 1) {
-                  navigator.push(
-                    MaterialPageRoute(
+                  await navigator.push<void>(
+                    MaterialPageRoute<void>(
                       builder: (_) => const ArchiveScreen(),
                     ),
                   );
+                  // Home vừa được hiện lại: làm mới danh sách ghi chú.
+                  await onReturnFromArchive?.call();
                 }
               },
             ),
-
             const Spacer(),
-
-            // Cài đặt (Settings)
             _DrawerItem(
               icon: Icons.settings_outlined,
               label: 'Cài đặt',
               isSelected: false,
               onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const SettingsScreen(),
-                  ),
+                final navigator = Navigator.of(context);
+                navigator.pop();
+                navigator.push(
+                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
                 );
               },
             ),
-
-            // Đăng xuất
             _DrawerItem(
               icon: Icons.logout,
               label: 'Đăng xuất',
@@ -109,10 +99,9 @@ class KeepDrawer extends StatelessWidget {
                 navigator.pop();
                 await LoginService.logout();
                 NoteService.clearCache();
+                if (!navigator.mounted) return;
                 navigator.pushAndRemoveUntil(
-                  MaterialPageRoute(
-                    builder: (_) => const LoginScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
                   (route) => false,
                 );
               },
@@ -165,9 +154,7 @@ class _DrawerItem extends StatelessWidget {
             style: TextStyle(
               fontSize: 14,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-              color: isSelected
-                  ? colorScheme.primary
-                  : colorScheme.onSurface,
+              color: isSelected ? colorScheme.primary : colorScheme.onSurface,
             ),
           ),
           dense: true,
