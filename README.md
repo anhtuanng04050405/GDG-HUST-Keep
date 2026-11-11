@@ -1,6 +1,11 @@
 <h3 align="center">&lt;GDG-HUST&gt; Keep</h3>
 <details>
 <summary><b>Phần 1: Demo sản phẩm</b></summary>
+
+
+https://github.com/user-attachments/assets/e3ba0e89-8522-4525-97e5-60bcb785395e
+
+
 </details>
 
 <details>
